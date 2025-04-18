@@ -4,8 +4,9 @@ import codecs
 import re
 import sys
 from pathlib import Path
+from datetime import datetime
 
-# version: 1.5
+# version: 1.6
 
 if len(sys.argv) == 1:
     print("Full vcard, use: ./gen_vcf.py filename.xlsx")
@@ -43,10 +44,12 @@ else:
     lang_first_name = 2
     lang_middle_name = 3
 
+now = datetime.now()
+date_time = now.strftime("%Y-%m-%dT%H:%M:%S")
 
-# load xlsx master-file, and open active sheet
-wb_object = openpyxl.load_workbook(xlsx_file)
-sheet = wb_object.active
+# load xlsx master-file, and open sheet "Active users"
+wb_object = openpyxl.load_workbook(xlsx_file, data_only = 'True')
+sheet = wb_object["Active users"]
 
 # get max rows
 max_row = sheet.max_row
@@ -62,6 +65,8 @@ contact_obj = [{
     "middle_name":"",
     "full_name":"",
     "login":"",
+    "department":"",
+    "title":"",
     "description":"",
     "email":"",
     "phone":"",
@@ -95,20 +100,24 @@ for row in sheet.iter_rows():
         elif column_index == 13:
             contact_obj[row_index]["login"] = cell.value
         elif column_index == 15:
-            contact_obj[row_index]["description"] = cell.value
+            contact_obj[row_index]["department"] = cell.value
         elif column_index == 16:
-            contact_obj[row_index]["email"] = cell.value
+            contact_obj[row_index]["title"] = cell.value
         elif column_index == 17:
-            contact_obj[row_index]["phone"] = cell.value
+            contact_obj[row_index]["description"] = cell.value
         elif column_index == 18:
-            contact_obj[row_index]["active"] = cell.value
+            contact_obj[row_index]["email"] = cell.value
         elif column_index == 19:
-            contact_obj[row_index]["org"] = cell.value
+            contact_obj[row_index]["phone"] = cell.value
         elif column_index == 20:
-            contact_obj[row_index]["photo"] = cell.value
+            contact_obj[row_index]["active"] = cell.value
         elif column_index == 21:
-            contact_obj[row_index]["birthday"] = str(cell.value)
+            contact_obj[row_index]["org"] = cell.value
         elif column_index == 22:
+            contact_obj[row_index]["photo"] = cell.value
+        elif column_index == 23:
+            contact_obj[row_index]["birthday"] = str(cell.value)
+        elif column_index == 24:
             contact_obj[row_index]["gender"] = str(cell.value)
         column_index += 1
     row_index += 1
@@ -147,6 +156,16 @@ for row_index in range(max_row):
               ";"+contact_obj[row_index]["first_name"]+
               ";"+contact_obj[row_index]["middle_name"]+";;\n")
 
+        # if empty, not write
+        if contact_obj[row_index]["title"] != "":
+            vcf_file.write("TITLE:"+
+                           contact_obj[row_index]["title"]+"\n")
+
+        # if empty, not write
+        if contact_obj[row_index]["department"] != "":
+            vcf_file.write("X-DEPARTMENT:"+
+                           contact_obj[row_index]["department"]+"\n")
+
         # split multiple emails, skip empty
         for email_addr in re.split(r"\s+",
                                    contact_obj[row_index]["email"]):
@@ -165,7 +184,9 @@ for row_index in range(max_row):
 
         vcf_file.write("NOTE:"+
                        contact_obj[row_index]["description"]+"\n")
-        vcf_file.write("ORG:"+contact_obj[row_index]["org"]+"\n")
+
+        vcf_file.write("ORG:"+contact_obj[row_index]["org"]+"; "+
+            contact_obj[row_index]["department"]+"\n")
 
         # if empty, not write
         if contact_obj[row_index]["photo"] != "":
@@ -182,6 +203,8 @@ for row_index in range(max_row):
             vcf_file.write("GENDER:"+
                            contact_obj[row_index]["gender"]+"\n")
 
+        vcf_file.write("REV:"+date_time+"\n")
+
         vcf_file.write("END:VCARD\n")
 
         # break if found selected login
@@ -197,6 +220,3 @@ for row_index in range(max_row):
 vcf_file.close()
 
 print("done")
-
-
-
