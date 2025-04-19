@@ -2,7 +2,7 @@
 Set of scripts for convert excel xlsx to vcf vcard file
 
 Script "gen_vcf_base64_photo.py photo.jpg" used for generate Base64 text from square jpeg image (contact avatar), compatible with excel limitation.
-Then you can put this text to "Photo" cell in xlxx file.
+Then you can put this text to "Photo" cell in xlsx file.
 
 File "user_list.xlsx" is special formated list of users.
 
